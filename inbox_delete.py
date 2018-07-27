@@ -54,8 +54,8 @@ def main():
       logger.debug('%s at %s' % (node['author']['name'],node['created_at']))
       
       # Set to remove before a specific date, or just anything before 'now'
-      # date1 = datetime.now()
-      date1 = datetime.strptime('2016-03-01T00:00:00.000Z','%Y-%m-%dT%H:%M:%S.%fZ') # In UTC
+      date1 = datetime.now()
+      # date1 = datetime.strptime('2016-03-01T00:00:00.000Z','%Y-%m-%dT%H:%M:%S.%fZ') # In UTC
       date2 = datetime.strptime(node['created_at'],'%Y-%m-%dT%H:%M:%S.%fZ') # In UTC
       logger.debug('date1: %s  date2: %s' % (date1,date2))
 
