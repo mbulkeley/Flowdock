@@ -34,7 +34,7 @@ def main():
   headers      = {"X-flowdock-wait-for-message":"true","content-type":"application/json","accept":"application/json"}
   
   # Posts from external resources, oldest first.
-  payload = json.dumps({"sort":"asc","limit":"200","event":"discussion,activity"}) 
+  payload = json.dumps({"sort":"asc","limit":"200","event":"discussion,activity","since_id":"1"}) 
   
   try:
     # Instantiate a session with some default configuration params
