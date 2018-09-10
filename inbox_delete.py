@@ -2,7 +2,6 @@
 
 def main():
   import json
-  import random
   import logging
   import requests
   import dateutil.parser
