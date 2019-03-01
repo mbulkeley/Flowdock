@@ -14,7 +14,7 @@ def main():
   logger.setLevel(logging.INFO)
 
   # Logging file handler
-  handler = logging.FileHandler('<PATH TO LOG')
+  handler = logging.FileHandler('<PATH TO LOG>')
   handler.setLevel(logging.INFO)
 
   # Logging format added to handler
