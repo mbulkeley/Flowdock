@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3.7
 
 def main():
+    import os
     import json
     import random
     import logging
@@ -11,11 +13,11 @@ def main():
 
     # Set up logging
     logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG)
 
     # Logging file handler
-    handler = logging.FileHandler('<PATH TO LOG>')
-    handler.setLevel(logging.INFO)
+    handler = logging.FileHandler('./projects/Python/morning/logs/morning.log')
+    handler.setLevel(logging.DEBUG)
 
     # Logging format added to handler
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%m/%d/%Y %H:%M:%S')
@@ -23,7 +25,9 @@ def main():
     logger.addHandler(handler)
     logger.info('*** STARTING ***')
 
-    api_key = "<API KEY>"
+    flowdock_api_key = os.environ.get("FLOWDOCK_API_KEY")
+    flowdock_org = os.environ.get("FLOWDOCK_ORG")
+    flowdock_flow = os.environ.get("FLOWDOCK_FLOW")
 
     current_time = datetime.datetime.now()
     utc_time = datetime.datetime.utcnow()
@@ -38,21 +42,17 @@ def main():
     emoji = [":tada:", ":beers:", ":taco:", ":pow:", ":booyah:"]
     friday_message = ["Friday", "Happy Friday", "TGIF", "Weekend"]
 
-    organization = "<ORGANIZATION>"
-
-    flow = "<FLOW>"
-
     logger.debug('IS TODAY FRIDAY? {}'.format(friday))
 
-    try:
-        # Instantiate a session with some default configuration params
-        session = requests.Session()
+    # Instantiate a session with some default configuration params
+    session = requests.Session()
 
+    try:
         logger.info('Searching for Good morning thread.')
 
-        url = 'https://api.flowdock.com/flows/%s/%s/messages?limit=5&search=morning' % (organization, flow)
+        url = 'https://api.flowdock.com/flows/%s/%s/messages?limit=5&search=morning' % (flowdock_org, flowdock_flow)
         headers = {"content-type": "application/json", "accept": "application/json"}
-        response = session.get(url, headers=headers, auth=HTTPBasicAuth(api_key, 'DUMMY'))
+        response = session.get(url, headers=headers, auth=HTTPBasicAuth(flowdock_api_key, 'DUMMY'))
         logger.debug('HEADERS: {}\n'.format(response.headers))
         logger.debug('URL: {}\n'.format(url))
         logger.debug('FULL RESPONSE JSON: {}\n'.format(response.json()))
@@ -68,18 +68,18 @@ def main():
             logger.debug('MESSAGE ID: {}'.format(node['id']))
             logger.debug('Message: {} - Created at: {}\n'.format(node['content'].encode("utf-8"), node['created_at']))
 
-            if utc_time - dateutil.parser.parse(node['created_at'], ignoretz=True) <= datetime.timedelta(minutes=10) and \
-                    node['thread']['initial_message'] == node['id']:
+            if utc_time - dateutil.parser.parse(node['created_at'], ignoretz=True) <= datetime.timedelta(minutes=10) \
+                    and node['thread']['initial_message'] == node['id']:
                 logger.debug('Adding THREAD {}'.format(node['thread_id']))
 
                 url = 'https://api.flowdock.com/users/{}'.format(node['user'])
                 logger.debug(url)
 
-                response = session.get(url, headers=headers, auth=HTTPBasicAuth(api_key, 'DUMMY'))
+                response = session.get(url, headers=headers, auth=HTTPBasicAuth(flowdock_api_key, 'DUMMY'))
 
                 logger.debug('NICKNAME FOR @MENTION: {}'.format(response.json()['nick']))
-                threads.append(
-                    '{{"thread_id": "{}","nickname": "{}"}}'.format(node['thread_id'], response.json()['nick']))
+                threads.append('{{"thread_id": "{}","nickname": "{}"}}'.format(node['thread_id'],
+                                                                               response.json()['nick']))
 
         logger.debug(threads)
         logger.debug('LENGTH OF THREADS: {}'.format(len(threads)))
@@ -101,12 +101,12 @@ def main():
                 payload = {"content": content, "event": "message"}
                 logger.debug(payload)
 
-                url = 'https://api.flowdock.com/flows/{}/{}/threads/{}/messages'.format(organization, flow,
-                                                                                        info['thread_id'])
+                url = 'https://api.flowdock.com/flows/{}/{}/threads/{}/messages'.format(
+                    flowdock_org, flowdock_flow, info['thread_id'])
                 logger.debug(url)
 
                 response = session.post(url, data=json.dumps(payload), headers=headers,
-                                        auth=HTTPBasicAuth(api_key, 'DUMMY'))
+                                        auth=HTTPBasicAuth(flowdock_api_key, 'DUMMY'))
                 logger.info('Response from Flowdock: {}'.format(response.headers['Status']))
         else:
             logger.info('Posting to CHAT')
@@ -118,22 +118,21 @@ def main():
             payload = {"content": content, "event": "message"}
             logger.debug(payload)
 
-            url = 'https://api.flowdock.com/flows/{}/{}/messages'.format(organization, flow)
+            url = 'https://api.flowdock.com/flows/{}/{}/messages'.format(flowdock_org, flowdock_flow)
 
             logger.debug(url)
             response = session.post(url, data=json.dumps(payload), headers=headers,
-                                    auth=HTTPBasicAuth(api_key, 'DUMMY'))
+                                    auth=HTTPBasicAuth(flowdock_api_key, 'DUMMY'))
             logger.info('Response from Flowdock: {}'.format(response.headers['Status']))
 
         logger.debug('Response headers: {}'.format(response.headers))
         logger.debug('Response content: {}'.format(response.content))
-        session.close()
-
         logger.info('*** DONE ***')
 
     except Exception as err:
-        session.close()
         logger.error('There was an ERROR: ', exc_info=True)
+    finally:
+        session.close()
 
 
 main()

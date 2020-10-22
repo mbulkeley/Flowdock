@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
+# !/usr/bin/env python3.7
 
 def main():
+    import os
     import json
     import time
     import random
@@ -11,11 +13,11 @@ def main():
 
     # Set up logging
     logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG)
 
     # Logging file handler
-    handler = logging.FileHandler('<PATH TO LOG>')
-    handler.setLevel(logging.INFO)
+    handler = logging.FileHandler('./projects/Python/lunch/logs/lunch.log')
+    handler.setLevel(logging.DEBUG)
 
     # Logging format added to handler
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%m/%d/%Y %H:%M:%S')
@@ -23,29 +25,34 @@ def main():
     logger.addHandler(handler)
     logger.info('*** STARTING ***')
 
-    api_key = "<APIKEY>"
+    flowdock_api_key = os.environ.get("FLOWDOCK_API_KEY")
+    flowdock_org = os.environ.get("FLOWDOCK_ORG")
+    flowdock_flow = os.environ.get("FLOWDOCK_FLOW")
 
     current_time = datetime.datetime.now()
-    # utc_time = datetime.datetime.utcnow()
 
     if current_time.weekday() != 4:
         friday = False
     else:
         friday = True
 
-    organization = "<ORGANIZATION>"
-    flow = "<FLOW>"
-
     logger.debug('IS TODAY FRIDAY? %s' % friday)
 
-    try:
-        # Instantiate a session with some default configuration params
-        session = requests.Session()
+    # Instantiate a session with some default configuration params
+    session = requests.Session()
 
+    try:
         headers = {'X-flowdock-wait-for-message': 'true', 'content-type': 'application/json',
                    'Accept': 'application/json'}
         session.headers.update(headers)
         logger.debug('Session headers: %s' % session.headers)
+
+        logger.debug('Taking a bit of a snooze.')
+        snooze = (random.randint(1, 10) * 60)
+        logger.info('Snoozing at: %s for %s minutes.' % (datetime.datetime.now(), (snooze / 60)))
+        time.sleep(snooze)  # Sleep 1-10 some-odd minutes.
+        logger.info('Awake at: %s' % (datetime.datetime.now()))
+
         logger.info('Posting to CHAT')
 
         if not friday:
@@ -60,10 +67,11 @@ def main():
         payload = {"content": content, "event": "message"}
         logger.debug('Payload: %s' % payload)
 
-        url = 'https://api.flowdock.com/flows/%s/%s/messages' % (organization, flow)
+        url = 'https://api.flowdock.com/flows/%s/%s/messages' % (flowdock_org, flowdock_flow)
 
         logger.debug('URL: %s' % url)
-        response = session.post(url, data=json.dumps(payload), headers=headers, auth=HTTPBasicAuth(api_key, 'DUMMY'))
+        response = session.post(url, data=json.dumps(payload), headers=headers,
+                                auth=HTTPBasicAuth(flowdock_api_key, 'DUMMY'))
         logger.info('Response from Flowdock: %s' % response.headers['Status'])
         logger.debug('Response headers: %s' % response.headers)
         logger.debug('Response content: %s' % response.content)
@@ -79,18 +87,21 @@ def main():
         logger.info('Posting to THREAD')
         payload = {"content": "#back", "event": "message"}
 
-        url = 'https://api.flowdock.com/flows/%s/%s/threads/%s/messages' % (organization, flow, thread)
+        url = 'https://api.flowdock.com/flows/%s/%s/threads/%s/messages' % (flowdock_org, flowdock_flow, thread)
         logger.debug(url)
 
-        response = session.post(url, data=json.dumps(payload), headers=headers, auth=HTTPBasicAuth(api_key, 'DUMMY'))
+        response = session.post(url, data=json.dumps(payload), headers=headers,
+                                auth=HTTPBasicAuth(flowdock_api_key, 'DUMMY'))
         logger.info('Response from Flowdock: %s' % response.headers['Status'])
-
-        session.close()
         logger.info('*** DONE ***')
 
     except Exception as err:
-        session.close()
+
+        logger.error(err)
         logger.error('There was an ERROR: ', exc_info=True)
+
+    finally:
+        session.close()
 
 
 main()
