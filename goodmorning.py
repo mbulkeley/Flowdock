@@ -129,6 +129,8 @@ def main():
         logger.debug('Response content: {}'.format(response.content))
         logger.info('*** DONE ***')
 
+    except requests.exceptions.ConnectionError as errc:
+        print("Error Connecting: ", errc)
     except Exception as err:
         logger.error('There was an ERROR: ', exc_info=True)
     finally:
