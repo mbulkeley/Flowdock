@@ -16,7 +16,7 @@ def main():
     logger.setLevel(logging.DEBUG)
 
     # Logging file handler
-    handler = logging.FileHandler('./projects/Python/morning/logs/morning.log')
+    handler = logging.FileHandler("./logs/morning.log")
     handler.setLevel(logging.DEBUG)
 
     # Logging format added to handler

@@ -15,7 +15,7 @@ def main():
     logger.setLevel(logging.DEBUG)
 
     # Logging file handler
-    handler = logging.FileHandler('<PATH TO LOG FILE>/inbox_delete.log')
+    handler = logging.FileHandler("<PATH TO LOG FILE>/inbox_delete.log")
     # Set to 'INFO' to actually delete the inbox items. 'DEBUG' will list what is going
     # to be deleted, but not delete anything
     handler.setLevel(logging.DEBUG)
